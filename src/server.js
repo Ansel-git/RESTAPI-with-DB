@@ -3,6 +3,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 const app = express();
 
@@ -19,10 +20,10 @@ app.use(limiter);
 
 // Database configuration
 const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: 'your_password',
-    database: 'blog_db'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || 'blog_db'
 };
 
 // Create database pool
@@ -37,7 +38,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'Authentication token required' });
     }
 
-    jwt.verify(token, 'your_jwt_secret_key', (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key', (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'Invalid token' });
         }
