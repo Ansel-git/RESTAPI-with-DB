@@ -2,10 +2,10 @@
 
 A RESTful API for managing blog posts with authentication and rate limiting.
 
-# Project Context
+## Project Context
 This project was developed as part of a coursework assignment. It demonstrates the use of Node.js, Express.js, and MySQL to build a secure and robust REST API for blog post management. The code is structured for clarity, maintainability, and best practices, and is ready for review by instructors or peers.
 
-# Features
+## Features
 - Full CRUD operations for blog posts
 - JWT-based authentication for protected routes
 - Rate limiting (100 requests per 2 minutes)
@@ -13,14 +13,14 @@ This project was developed as part of a coursework assignment. It demonstrates t
 - Error handling and clear feedback messages
 - CORS enabled
 
-# API Endpoints
+## API Endpoints
 
-# Authentication
+## Authentication
 - POST `/login`
   - Body: `username`, `password` (JSON or x-www-form-urlencoded)
   - Returns: JWT token
 
-# Blog Posts
+## Blog Posts
 - GET `/posts` - Get all posts
 
 - GET `/posts/:id` - Get a specific post
@@ -33,13 +33,13 @@ This project was developed as part of a coursework assignment. It demonstrates t
 
 - DELETE `/posts/:id` - Delete a post (requires authentication)
 
-# Authentication Header
+## Authentication Header
 For protected endpoints, include the JWT token in the `Authorization` header:
 ```
 Authorization: Bearer <your-token>
 ```
 
-# Error Handling
+## Error Handling
 The API returns clear HTTP status codes and feedback messages:
 - 200: Success
 - 201: Created

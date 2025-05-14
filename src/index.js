@@ -48,7 +48,7 @@ app.post('/login', (req, res) => {
     if (!username || !password) return res.status(400).json({ error: 'Username and password are required' });
 
     if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-        const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ username }, process.env.JWT_SECRET);
         res.json({ 
             message: 'Login successful',
             token 
