@@ -10,6 +10,14 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Log all requests
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    console.log('Request body:', req.body);
+    next();
+});
 
 // Rate limiter configuration
 const limiter = rateLimit({
@@ -29,6 +37,16 @@ const dbConfig = {
 // Create database pool
 const pool = mysql.createPool(dbConfig);
 
+// Test database connection
+pool.getConnection()
+    .then(connection => {
+        console.log('Database connected successfully');
+        connection.release();
+    })
+    .catch(err => {
+        console.error('Error connecting to the database:', err);
+    });
+
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -38,7 +56,11 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'Authentication token required' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key', (err, user) => {
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ error: 'JWT secret is not configured' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'Invalid token' });
         }
@@ -47,14 +69,58 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// Login route - moved to top of routes
+app.post('/login', (req, res) => {
+    console.log('Login attempt:', req.body);
+    
+    // Get username and password from either form data or JSON body
+    const username = req.body.username;
+    const password = req.body.password;
+    
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ error: 'JWT secret is not configured' });
+    }
+
+    // Check if username and password are provided
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    // Check credentials against environment variables
+    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+        const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token });
+    } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+    }
+});
+
 // Routes
 // Get all posts
 app.get('/posts', async (req, res) => {
     try {
+        console.log('Attempting to fetch posts...');
+        console.log('Database config:', {
+            host: dbConfig.host,
+            user: dbConfig.user,
+            database: dbConfig.database
+        });
+        
         const [rows] = await pool.query('SELECT * FROM posts');
+        console.log('Posts fetched successfully:', rows);
         res.json(rows);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching posts' });
+        console.error('Detailed error in GET /posts:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState,
+            sqlMessage: error.sqlMessage
+        });
+        res.status(500).json({ 
+            error: 'Error fetching posts',
+            details: error.message 
+        });
     }
 });
 
@@ -112,18 +178,6 @@ app.delete('/posts/:id', authenticateToken, async (req, res) => {
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: 'Error deleting post' });
-    }
-});
-
-// Login route
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    // In a real application, you would validate against a database
-    if (username === 'admin' && password === 'password') {
-        const token = jwt.sign({ username }, process.env.JWT_SECRET || 'your_jwt_secret_key', { expiresIn: '1h' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
     }
 });
 
