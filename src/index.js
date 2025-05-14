@@ -40,7 +40,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// ROUTES
+// LOGIN
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     
@@ -49,7 +49,10 @@ app.post('/login', (req, res) => {
 
     if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
         const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+        res.json({ 
+            message: 'Login successful',
+            token 
+        });
     } else {
         res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -58,19 +61,25 @@ app.post('/login', (req, res) => {
 // GET ALL POSTS
 app.get('/posts', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM posts');
-        res.json(rows);
+        const [rows] = await pool.query('SELECT id, title, content, author FROM posts');
+        res.json({
+            message: 'Posts retrieved successfully',
+            data: rows
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching posts' });
     }
 });
 
-// GET SINGLE POST  
+// GET POST BY ID
 app.get('/posts/:id', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
+        const [rows] = await pool.query('SELECT id, title, content, author FROM posts WHERE id = ?', [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Post not found' });
-        res.json(rows[0]);
+        res.json({
+            message: 'Post retrieved successfully',
+            data: rows[0]
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching post' });
     }
@@ -79,12 +88,20 @@ app.get('/posts/:id', async (req, res) => {
 // CREATE POST
 app.post('/posts', authenticateToken, async (req, res) => {
     const { title, content, author } = req.body;
+    
+    if (!title || !content || !author) {
+        return res.status(400).json({ error: 'Title, content, and author are required' });
+    }
+
     try {
         const [result] = await pool.query(
             'INSERT INTO posts (title, content, author) VALUES (?, ?, ?)',
             [title, content, author]
         );
-        res.status(201).json({ id: result.insertId, title, content, author });
+        res.status(201).json({
+            message: 'Post created successfully',
+            data: { id: result.insertId, title, content, author }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error creating post' });
     }
@@ -93,13 +110,21 @@ app.post('/posts', authenticateToken, async (req, res) => {
 // UPDATE POST
 app.put('/posts/:id', authenticateToken, async (req, res) => {
     const { title, content, author } = req.body;
+    
+    if (!title || !content || !author) {
+        return res.status(400).json({ error: 'Title, content, and author are required' });
+    }
+
     try {
         const [result] = await pool.query(
             'UPDATE posts SET title = ?, content = ?, author = ? WHERE id = ?',
             [title, content, author, req.params.id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Post not found' });
-        res.json({ id: req.params.id, title, content, author });
+        res.json({
+            message: 'Post updated successfully',
+            data: { id: req.params.id, title, content, author }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error updating post' });
     }
@@ -110,7 +135,10 @@ app.delete('/posts/:id', authenticateToken, async (req, res) => {
     try {
         const [result] = await pool.query('DELETE FROM posts WHERE id = ?', [req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Post not found' });
-        res.status(204).send();
+        res.json({
+            message: 'Post deleted successfully',
+            data: { id: req.params.id }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error deleting post' });
     }
