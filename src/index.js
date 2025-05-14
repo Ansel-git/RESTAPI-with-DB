@@ -120,7 +120,7 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     // In a real application, you would validate against a database
     if (username === 'admin' && password === 'password') {
-        const token = jwt.sign({ username }, 'your_jwt_secret_key', { expiresIn: '1h' });
+        const token = jwt.sign({ username }, process.env.JWT_SECRET || 'your_jwt_secret_key', { expiresIn: '1h' });
         res.json({ token });
     } else {
         res.status(401).json({ error: 'Invalid credentials' });
