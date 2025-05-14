@@ -2,6 +2,9 @@
 
 A RESTful API for managing blog posts with authentication and rate limiting.
 
+## Video Demo
+[DEMO](https://drive.google.com/drive/folders/1EfWQjLnFZzPqOlvvJ6mQ9horBVtbKmiG?usp=sharing)
+
 ## Project Context
 This project was developed as part of a coursework assignment. It demonstrates the use of Node.js, Express.js, and MySQL to build a secure and robust REST API for blog post management. The code is structured for clarity, maintainability, and best practices, and is ready for review by instructors or peers.
 
